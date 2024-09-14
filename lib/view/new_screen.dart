@@ -24,6 +24,7 @@ class Post {
   final String latitude;
   final String sentiment;
   final String status;
+  final List<String> statuses;
 
   Post({
     required this.imageUrl,
@@ -32,6 +33,7 @@ class Post {
     required this.latitude,
     required this.sentiment,
     required this.status,
+    required this.statuses,
   });
 }
 
@@ -55,7 +57,8 @@ class _NewsScreenState extends State<NewsScreen> {
             longitude: jsonPost['longitude'] ?? '',
             latitude: jsonPost['latitude'] ?? '',
             sentiment: jsonPost['sentiment'] ?? '',
-            status: jsonPost['status'] ?? 'unknown',
+            status: jsonPost['completed'] ? 'completed' : 'not completed',
+            statuses: (jsonPost['statuses'] as List<dynamic>).map((status) => status['name'] as String).toList(),
           );
           posts.add(post);
         }
@@ -64,7 +67,6 @@ class _NewsScreenState extends State<NewsScreen> {
       throw Exception('Failed to load posts');
     }
   }
-
 
   @override
   void initState() {
@@ -92,26 +94,83 @@ class _NewsScreenState extends State<NewsScreen> {
         }
 
         return AlertDialog(
-          title: Text('Post Details'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          title: Text(
+            'Post Details',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.check_circle,
+                      color: post.status == 'completed' ? Colors.green : Colors.red,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Status: ${post.status}',
+                      style: TextStyle(
+                        color: post.status == 'completed' ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.sentiment_satisfied,
+                      color: sentimentColor,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Sentiment: ${post.sentiment}',
+                      style: TextStyle(
+                        color: sentimentColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
                 Text(
-                  'Status: ${post.status}',
+                  'Timeline:',
                   style: TextStyle(
-                    color: post.status == 'completed' ? Colors.green : Colors.red,
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-                SizedBox(height: 10),
-                Text('Description: ${post.description}'),
+                for (var status in post.statuses)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
+                    child: Text(' - $status'),
+                  ),
                 SizedBox(height: 10),
                 Text(
-                  'Sentiment: ${post.sentiment}',
-                  style: TextStyle(color: sentimentColor),
+                  'Description:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-                SizedBox(height: 10),
+                SizedBox(height: 5),
+                Text(
+                  post.description,
+                  style: TextStyle(
+                    fontSize: 14,
+                  ),
+                ),
               ],
             ),
           ),
@@ -122,6 +181,7 @@ class _NewsScreenState extends State<NewsScreen> {
                 if (post.longitude.isNotEmpty && post.latitude.isNotEmpty)
                   IconButton(
                     icon: Icon(Icons.location_on),
+                    color: Colors.blue,
                     onPressed: () async {
                       final url = 'https://www.google.com/maps/search/?api=1&query=${post.latitude},${post.longitude}';
                       try {
@@ -134,7 +194,13 @@ class _NewsScreenState extends State<NewsScreen> {
                     },
                   ),
                 TextButton(
-                  child: Text('OK'),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
